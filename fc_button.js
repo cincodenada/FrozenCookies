@@ -214,8 +214,37 @@ function updateTimers() {
   var purchasePercent = purchaseTotal / (purchaseTotal + bankTotal);
   var bankMax = bankTotal / (purchaseTotal + bankTotal);
   var actualCps = Game.cookiesPs + Game.mouseCps() * FrozenCookies.cookieClickSpeed;
-  
+
+  var wrinklers_approaching = 0;
+  var wrinklers_here = 0;
+  var wrinklers_cookies_eaten = 0;
+  var wrinklers_total_hp = 0;
+  var wrinklers_max_hp = 0;
+  var wrinklers_per = 1;
+
   var t_draw = [];
+  
+  $.each(Game.wrinklers, function(idx, wrinkler) {
+    if(wrinkler.close > 0) {
+      wrinklers_cookies_eaten += wrinkler.sucked;
+      wrinklers_total_hp += wrinkler.hp;
+      wrinklers_max_hp += 3;
+      if(wrinkler.close == 1) {
+        wrinklers_approaching++;
+      } else {
+        wrinklers_here++;
+      }
+      if(wrinklers_per) {
+        bar_size = (wrinkler.close == 1) ? wrinkler.hp/3 : wrinkler.close;
+        t_draw.push({
+          f_percent: bar_size,
+          name: "Wrinkler Cookies Eaten",
+          display: Beautify(wrinkler.sucked),
+          c1: "rgba(102, 34, 0, 1)",
+        });
+      }
+    }
+  });
   
   if (chainTotal) {
     t_draw.push({
@@ -297,6 +326,14 @@ function updateTimers() {
       c1: "rgba(55, 169, 230, 1)",
       name: "HC Completion",
       display: (Math.round(decimal_HC_complete*10000)/100)+"%"
+    });
+  }
+  if ((wrinklers_here + wrinklers_approaching) > 0) {
+    t_draw.push({
+      f_percent: wrinklers_total_hp/wrinklers_max_hp,
+      name: "Wrinkler Cookies Eaten",
+      display: Beautify(wrinklers_cookies_eaten),
+      c1: "rgba(102, 34, 0, 1)",
     });
   }
   var height = $('#backgroundLeftCanvas').height() - 140;
