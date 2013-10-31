@@ -131,14 +131,17 @@ function drawCircles(t_d, x, y) {
   if (typeof(c.measureText) != "function") {
     return;
   }
+
+  var numNames = t_d.reduce(function(sum,item){return (item.name) ? sum + 1: sum;}, 0);
   var maxRadius = 10 + 10*t_d.reduce(function(sum,item){return (item.overlay) ? sum : sum + 1;},0);
-  var heightOffset = maxRadius + 5 - (15 * (t_d.length - 1) / 2)
+  var heightOffset = maxRadius + 5 - (15 * (numNames - 1) / 2)
+
   var i_c = 0;
   var i_tc = 0;
   var t_b = ['rgba(170, 170, 170, 1)','rgba(187, 187, 187, 1)','rgba(204, 204, 204, 1)','rgba(221, 221, 221, 1)','rgba(238, 238, 238, 1)','rgba(255, 255, 255, 1)'];
   var maxWidth = Math.max.apply(null,t_d.map(function(o){return (o.name) ? c.measureText({fontSize: "12px", fontFamily: "Arial", maxWidth:c.width, text: (o.name + (o.display ? ": "+o.display : ""))}).width : 250;}));
-  var maxHeight = t_d.map(function(o){return (o.name) ? c.measureText({fontSize: "12px", fontFamily: "Arial", maxWidth:c.width, text: (o.name + (o.display ? ": "+o.display : ""))}).height : 250;})
-                     .reduce(function(sum,item){return sum+item;},0);        
+  var maxHeight = t_d.map(function(o){return (o.name) ? c.measureText({fontSize: "12px", fontFamily: "Arial", maxWidth:c.width, text: (o.name + (o.display ? ": "+o.display : ""))}).height : 0;})
+                     .reduce(function(sum,item){return sum+item;},0);
   c.drawRect({
     fillStyle: 'rgba(153, 153, 153, 0.6)',
     x: x + maxRadius * 2 + maxWidth / 2 + 35, y: y + maxRadius + 5,
@@ -221,28 +224,66 @@ function updateTimers() {
   var wrinklers_total_hp = 0;
   var wrinklers_max_hp = 0;
   var wrinklers_per = 1;
+  var wrinklers_locations = [];
+  var wrinklers_max_sucked = 0;
+  var wrinklers_wedge_halfsize = 360/Game.wrinklers.length/4;
+  var wrinklers_bg = "#3344FF";
 
   var t_draw = [];
   
-  $.each(Game.wrinklers, function(idx, wrinkler) {
-    if(wrinkler.close > 0) {
-      wrinklers_cookies_eaten += wrinkler.sucked;
-      wrinklers_total_hp += wrinkler.hp;
-      wrinklers_max_hp += 3;
-      if(wrinkler.close == 1) {
-        wrinklers_approaching++;
-      } else {
-        wrinklers_here++;
+  t_draw.push({
+    f_percent: 1,
+    c1: wrinklers_bg,
+  });
+
+  order = [];
+  var max_sucked = 0;
+  var min_sucked = null;
+  for(i=Game.wrinklers.length - 1; i >= 0; i--) {
+    me = {
+      'id': i,
+      'angle': (540-(i/Game.wrinklers.length)*360) % 360
+    };
+    order.push(me);
+    //Hack for straddling 0/360
+    if(me.angle == 0) {
+      order.push({
+        'id': me.id,
+        'angle': 360
+      });
+    }
+    if(cursucked = Game.wrinklers[i].sucked) {
+      if(cursucked > max_sucked) { 
+        max_sucked = cursucked;
       }
-      if(wrinklers_per) {
-        bar_size = (wrinkler.close == 1) ? wrinkler.hp/3 : wrinkler.close;
-        t_draw.push({
-          f_percent: bar_size,
-          name: "Wrinkler Cookies Eaten",
-          display: Beautify(wrinkler.sucked),
-          c1: "rgba(102, 34, 0, 1)",
-        });
+      if(cursucked < min_sucked || min_sucked == null) {
+        min_sucked = cursucked;
       }
+    }
+  }
+  order.sort(function(a,b) {
+    return b.angle - a.angle;
+  });
+  sucked_range = max_sucked - min_sucked;
+
+  order.forEach(function(o) {
+    me = Game.wrinklers[o.id];
+    if(me.close > 0) {
+      if(me.sucked == max_sucked) { color = 255 }
+      else {
+        suckedval = (me.sucked-min_sucked)/sucked_range || 0;
+        color = 34 + parseInt(200*suckedval);
+      }
+      t_draw.push({
+        f_percent: Math.min(1,(o.angle + wrinklers_wedge_halfsize*me.close)/360),
+        c1: "rgba(102, " + color + ", 0, 1)",
+        overlay: true
+      });
+      t_draw.push({
+        f_percent: Math.max(0,(o.angle - wrinklers_wedge_halfsize*me.close)/360),
+        c1: wrinklers_bg,
+        overlay: true
+      });
     }
   });
   
