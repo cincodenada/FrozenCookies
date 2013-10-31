@@ -13,12 +13,14 @@ FrozenCookies.loadInterval = setInterval(function() {
 }, 1000);
 
 function fcInit() {
-    var script_list = [
+  var fc_base = 'https://raw.github.com/cincodenada/FrozenCookies/master/';
+  //var fc_base = 'https://raw.github.com/Icehawk78/FrozenCookies/master/';
+  var script_list = [
     'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js',
     'http://underscorejs.org/underscore-min.js',
     'http://calebevans.me/projects/jcanvas/resources/jcanvas/jcanvas.min.js',
-    'https://raw.github.com/Icehawk78/FrozenCookies/master/cc_upgrade_prerequisites.js',
-    'https://raw.github.com/Icehawk78/FrozenCookies/master/fc_button.js'
+    fc_base + 'cc_upgrade_prerequisites.js',
+    fc_base + 'fc_button.js'
   ]
   var done = 0;
   var jquery = document.createElement('script');
